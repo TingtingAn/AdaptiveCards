@@ -8,49 +8,48 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xamarin.Forms;
-using Microsoft.Bot.Connector.DirectLine;
 using Newtonsoft.Json.Linq;
 using AdaptiveCards.Rendering;
-using AdaptiveCards.Rendering.Config;
+using System.Xml.Serialization;
+using AdaptiveCards.Rendering.XamarinForms;
+
+using AdaptiveCards.Sample.BotClient;
 
 namespace AdaptiveCards.XamarinForms.BotClient
 {
     public partial class MainPage : ContentPage
     {
-        private DirectLineClient _client;
-        private Conversation _conversation;
+        // private DirectLineClient _client;
+        // private Conversation _conversation;
         private string _watermark;
 
-        private Action<object, MissingInputEventArgs> _onMissingInput = (s, e) => { };
+        // private Action<object, MissingInputEventArgs> _onMissingInput = (s, e) => { };
         private Action<object, ActionEventArgs> _onAction = (s, a) => { };
-        private AdaptiveCardRenderer _renderer;
+        private AdaptiveCards.Rendering.XamarinForms.AdaptiveCardRenderer _renderer;
+
+        CardStorage CardsReader = new CardStorage();
+
+        StackLayout _cardContainer = null;
+
+        String[] cardFileNames = { "ActivityUpdate.json", "CalendarReminder.json", "FlightItinerary.json", "FlightUpdate.json", "FoodOrder.json",
+                                       "ImageGallery.json", "InputForm.json", "Inputs.json", "Restaurant.json", "Solitaire.json", "SportingEvent.json",
+                                       "StockUpdate.json", "WeatherCompact.json", "WeatherLarge.json" };
 
         public MainPage()
         {
             InitializeComponent();
         }
 
-
-
         protected override async void OnAppearing()
         {
             base.OnAppearing();
 
-            var baseUri = new Uri("https://directline.scratch.botframework.com");
-            var secret = "b9RlKakMKPk.cwA.HLc.m6lzEenENtMMk2TD_Lh4iGzK3VlP6x_NsRaA-KLhHkk";
-            _client = new DirectLineClient(baseUri, new DirectLineClientCredentials(secret));
+            _renderer = new AdaptiveCards.Rendering.XamarinForms.AdaptiveCardRenderer(new AdaptiveHostConfig());
 
-            _conversation = await _client.Conversations.StartConversationAsync().ConfigureAwait(false);
+            _cardContainer = this.FindByName<StackLayout>("Items");
 
-            _renderer = new AdaptiveCardRenderer(new HostConfig());
-
-            // AdaptiveTestBot
-            // d5600769-0c92-4ab3-99f4-61380589a887
-            // pass GWGDf3PnKzxLMvi3uo9uNLy
-
-
-            // dl key b9RlKakMKPk.cwA.HLc.m6lzEenENtMMk2TD_Lh4iGzK3VlP6x_NsRaA-KLhHkk
-            // dl b9RlKakMKPk.cwA.dzE.-n6M3jIwaakiWGtA6XX7-m5zn74m3yUzU5k5ANs8WGg
+            ReadCards();
+            Send();
         }
 
         private void _textBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -60,23 +59,10 @@ namespace AdaptiveCards.XamarinForms.BotClient
 
         private void SpeechButton_Clicked(object sender, EventArgs e)
         {
-            //if (VoiceInputExtension.Current != null)
-            //{
-            //    if (ChatAgent.Current.IsTakingVoiceInput)
-            //    {
-            //        ChatAgent.Current.StopVoiceInput();
-            //    }
-            //    else
-            //    {
-            //        ChatAgent.Current.StartVoiceInput();
-            //    }
-            //}
         }
 
         private async void _itemsLayout_SizeChanged(object sender, EventArgs e)
         {
-            //await Task.Delay(50);
-            //await MessagesScrollView.ScrollToAsync(0, int.MaxValue, true);
         }
 
         private void Button_Clicked(object sender, System.EventArgs e)
@@ -91,73 +77,27 @@ namespace AdaptiveCards.XamarinForms.BotClient
 
         private void Send()
         {
-            var text = Message.Text;
-            Send(text);
+            
+            _cardContainer.Children.Clear();
+            for (int i = 0; i < 14; ++i)
+            {
+                AdaptiveCard adaptiveCard = CardsReader.Get(i);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                RenderedAdaptiveCard renderedCard = _renderer.RenderCard(adaptiveCard);
+                _cardContainer.Children.Add(renderedCard.FrameworkElement);
+                stopwatch.Stop();
+
+                System.Diagnostics.Debug.WriteLine("Card: " + cardFileNames[i % cardFileNames.Length] + " - Time elapsed: " + stopwatch.ElapsedMilliseconds);
+            }
         }
 
         private async Task Send(string message)
         {
-            message = message.Replace('"', '\'');
-            Message.Text = "";
-
-            var fromProperty = new ChannelAccount("Matt");
-
-            var activity = new Activity(text: message, fromProperty: fromProperty, type: "message");
-            try
-            {
-                await _client.Conversations.PostActivityAsync(_conversation.ConversationId, activity);
-                await Task.Delay(2000);
-                await GetMessages();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
-                Debugger.Break();
-            }
-
         }
 
-        public async Task<IList<Activity>> GetMessages()
+        public async Task<IList<object>> GetMessages()
         {
-            var response = await _client.Conversations
-                .GetActivitiesAsync(_conversation.ConversationId, _watermark)
-                .ConfigureAwait(false);
-
-            var cardAttachments = response.Activities
-                .Where(m => m.Attachments != null)
-                .SelectMany(m => m.Attachments)
-                .Where(m => m.ContentType == "application/vnd.microsoft.card.adaptive");
-
-            foreach (var attachment in cardAttachments)
-            {
-                var jObject = (JObject)attachment.Content;
-                var card = jObject.ToObject<AdaptiveCard>();
-
-                Device.BeginInvokeOnMainThread(() =>
-                {
-                    var result = _renderer.RenderCard(card);
-
-                    if (result.View != null)
-                    {
-                        // Wire up click handler
-                        result.OnAction += (s, args) =>
-                        {
-                            _onAction?.Invoke(s, args);
-                        };
-
-                        var xaml = result.View;
-
-                        xaml.WidthRequest = 350;
-                        xaml.Margin = new Thickness(8);
-                        xaml.BackgroundColor = Color.LightGray;
-
-                        Items.Children.Add(xaml);
-                    }
-                });
-            }
-
-            _watermark = response.Watermark;
-            return response.Activities;
+            return null;
         }
 
         private void Current_VoiceInputCompleted(object sender, string e)
@@ -177,6 +117,11 @@ namespace AdaptiveCards.XamarinForms.BotClient
         private void Current_VoiceInputStarted(object sender, EventArgs e)
         {
             Message.IsEnabled = false;
+        }
+
+        private void ReadCards()
+        {
+            CardsReader.ReadAdaptiveCards(cardFileNames);
         }
     }
 }
