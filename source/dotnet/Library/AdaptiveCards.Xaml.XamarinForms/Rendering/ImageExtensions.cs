@@ -228,5 +228,30 @@ namespace AdaptiveCards.Rendering.XamarinForms
                     break;
             }
         }
+
+        public static void SetImageProperties(this FFImageLoading.Forms.CachedImage imageview, AdaptiveImage image, AdaptiveRenderContext context)
+        {
+            switch (image.Size)
+            {
+                case AdaptiveImageSize.Auto:
+                    //imageview.Stretch = Stretch.Uniform;
+                    break;
+                case AdaptiveImageSize.Stretch:
+                    imageview.HorizontalOptions = LayoutOptions.Fill;
+                    break;
+                case AdaptiveImageSize.Small:
+                    imageview.WidthRequest = context.Config.ImageSizes.Small;
+                    imageview.HeightRequest = context.Config.ImageSizes.Small;
+                    break;
+                case AdaptiveImageSize.Medium:
+                    imageview.WidthRequest = context.Config.ImageSizes.Medium;
+                    imageview.HeightRequest = context.Config.ImageSizes.Medium;
+                    break;
+                case AdaptiveImageSize.Large:
+                    imageview.WidthRequest = context.Config.ImageSizes.Large;
+                    imageview.HeightRequest = context.Config.ImageSizes.Large;
+                    break;
+            }
+        }
     }
 }

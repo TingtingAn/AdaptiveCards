@@ -49,5 +49,15 @@ namespace AdaptiveCards.Rendering.XamarinForms
         {
             OnMediaClicked?.Invoke(this, args);
         }
+
+        /// <summary>
+        /// Event handler for when user clicks a media.
+        /// </summary>
+        public event EventHandler<View> OnImageLoaded;
+
+        internal void InvokeOnImageLoaded(View args)
+        {
+            OnImageLoaded?.Invoke(this, args);
+        }
     }
 }

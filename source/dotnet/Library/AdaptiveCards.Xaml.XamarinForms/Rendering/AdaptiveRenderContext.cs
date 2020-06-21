@@ -27,7 +27,7 @@ namespace AdaptiveCards.Rendering.XamarinForms
 
         public AdaptiveRenderContext(Action<object, AdaptiveActionEventArgs> actionCallback,
             Action<object, MissingInputEventArgs> missingDataCallback,
-            Action<object, AdaptiveMediaEventArgs> mediaClickCallback)
+            Action<object, AdaptiveMediaEventArgs> mediaClickCallback,Action<object> imageLoadedCallback=null)
         {
             if (actionCallback != null)
                 OnAction += (obj, args) => actionCallback(obj, args);
@@ -37,6 +37,9 @@ namespace AdaptiveCards.Rendering.XamarinForms
 
             if (mediaClickCallback != null)
                 OnMediaClick += (obj, args) => mediaClickCallback(obj, args);
+
+            if (imageLoadedCallback != null)
+                OnImageLoaded += (sender, e) => imageLoadedCallback(sender);
         }
 
         public AdaptiveHostConfig Config { get; set; } = new AdaptiveHostConfig();
@@ -60,6 +63,7 @@ namespace AdaptiveCards.Rendering.XamarinForms
         public IDictionary<string, Func<string>> InputBindings = new Dictionary<string, Func<string>>();
 
         public event EventHandler<AdaptiveActionEventArgs> OnAction;
+        public event EventHandler OnImageLoaded;
 
         public event EventHandler<AdaptiveMediaEventArgs> OnMediaClick;
 
@@ -94,6 +98,11 @@ namespace AdaptiveCards.Rendering.XamarinForms
         public void ClickMedia(FrameworkElement ui, AdaptiveMediaEventArgs args)
         {
             OnMediaClick?.Invoke(ui, args);
+        }
+
+        public void ImageLoaded(FrameworkElement ui)
+        {
+            OnImageLoaded?.Invoke(ui, null);
         }
 
 #if WPF

@@ -21,8 +21,8 @@ namespace AdaptiveCards.Rendering.XamarinForms
     {
         public static FrameworkElement Render(AdaptiveImage image, AdaptiveRenderContext context)
         {
-            FrameworkElement uiBorder = null;
-            var uiImage = new Image();
+            var uiImage = new FFImageLoading.Forms.CachedImage();
+            //var uiImage = new Image();
 
             // Try to resolve the image URI
             Uri finalUri = context.Config.ResolveFinalAbsoluteUri(image.Url);
@@ -32,6 +32,10 @@ namespace AdaptiveCards.Rendering.XamarinForms
             }
 
             uiImage.Source = finalUri.AbsoluteUri;
+            uiImage.Finish += (sende, e) =>
+            {
+                context.ImageLoaded(uiImage);
+            };
 
             uiImage.SetHorizontalAlignment(image.HorizontalAlignment);
 
@@ -87,6 +91,5 @@ namespace AdaptiveCards.Rendering.XamarinForms
             return uiImage;
 #endif
         }
-
     }
 }

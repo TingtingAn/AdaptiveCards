@@ -204,7 +204,12 @@ namespace AdaptiveCards.Rendering.XamarinForms
                 renderCard?.InvokeOnMediaClick(args);
             }
 
-            var context = new AdaptiveRenderContext(ActionCallback, null, MediaClickCallback)
+            void ImageLoadedCallback(object args)
+            {
+                renderCard?.InvokeOnImageLoaded(args as View);
+            }
+
+            var context = new AdaptiveRenderContext(ActionCallback, null, MediaClickCallback, ImageLoadedCallback)
             {
                 ResourceResolvers = ResourceResolvers,
                 ActionHandlers = ActionHandlers,

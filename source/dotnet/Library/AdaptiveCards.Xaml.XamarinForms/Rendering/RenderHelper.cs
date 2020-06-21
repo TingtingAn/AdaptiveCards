@@ -37,5 +37,26 @@ namespace AdaptiveCards.Rendering
                     break;
             }
         }
+        public static void SetHorizontalAlignment(this FFImageLoading.Forms.CachedImage image, AdaptiveHorizontalAlignment alignment)
+        {
+            switch (alignment)
+            {
+                case AdaptiveHorizontalAlignment.Left:
+                    image.HorizontalOptions = LayoutOptions.Start;
+                    break;
+
+                case AdaptiveHorizontalAlignment.Center:
+                    image.HorizontalOptions = LayoutOptions.Center;
+                    break;
+
+                case AdaptiveHorizontalAlignment.Right:
+                    image.HorizontalOptions = LayoutOptions.End;
+                    break;
+
+                default:
+                    image.HorizontalOptions = LayoutOptions.FillAndExpand; //images fill available width
+                    break;
+            }
+        }
     }
 }
